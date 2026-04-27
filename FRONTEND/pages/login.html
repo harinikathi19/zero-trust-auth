@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login - Zero Trust</title>
+  <link rel="stylesheet" href="../assests/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
+    <div id="otpSection" style="display:none;">
+      <p>High-risk login detected. Please verify with OTP:</p>
+      <input id="otp" placeholder="Enter OTP" />
+      <button id="verifyOtpBtn">Verify OTP</button>
+    </div>
+    <button id="loginBtn">Login</button>
+    <p id="msg"></p>
+    <p><a href="signup.html">Create account</a></p>
+  </div>
+<script src="../assests/js/fingerprint.js"></script>
+<script src="../assests/js/auth.js"></script>
+<script>
+let typingMetrics = {
+  usernameStartTime: null,
+  usernameEndTime: null,
+  passwordStartTime: null,
+  passwordEndTime: null,
+  usernameKeystrokes: 0,
+  passwordKeystrokes: 0
+};
+
+let challengeId = null;
+
+// Track typing speed for username
+document.getElementById('username').addEventListener('keydown', function(e) {
+  if (!typingMetrics.usernameStartTime) {
+    typingMetrics.usernameStartTime = Date.now();
+  }
+  typingMetrics.usernameKeystrokes++;
+});
+
+document.getElementById('username').addEventListener('blur', function() {
+  typingMetrics.usernameEndTime = Date.now();
+});
+
+// Track typing speed for password
+document.getElementById('password').addEventListener('keydown', function(e) {
+  if (!typingMetrics.passwordStartTime) {
+    typingMetrics.passwordStartTime = Date.now();
+  }
+  typingMetrics.passwordKeystrokes++;
+});
+
+document.getElementById('password').addEventListener('blur', function() {
+  typingMetrics.passwordEndTime = Date.now();
+});
+
+// Calculate typing metrics
+function calculateTypingMetrics() {
+  const metrics = {
+    usernameTypingTime: typingMetrics.usernameEndTime && typingMetrics.usernameStartTime 
+      ? typingMetrics.usernameEndTime - typingMetrics.usernameStartTime 
+      : null,
+    passwordTypingTime: typingMetrics.passwordEndTime && typingMetrics.passwordStartTime 
+      ? typingMetrics.passwordEndTime - typingMetrics.passwordStartTime 
+      : null,
+    usernameKeystrokes: typingMetrics.usernameKeystrokes,
+    passwordKeystrokes: typingMetrics.passwordKeystrokes,
+    usernameTypingSpeed: typingMetrics.usernameEndTime && typingMetrics.usernameStartTime && typingMetrics.usernameKeystrokes > 0
+      ? typingMetrics.usernameKeystrokes / ((typingMetrics.usernameEndTime - typingMetrics.usernameStartTime) / 1000)
+      : null,
+    passwordTypingSpeed: typingMetrics.passwordEndTime && typingMetrics.passwordStartTime && typingMetrics.passwordKeystrokes > 0
+      ? typingMetrics.passwordKeystrokes / ((typingMetrics.passwordEndTime - typingMetrics.passwordStartTime) / 1000)
+      : null
+  };
+  return metrics;
+}
+
+document.getElementById('loginBtn').addEventListener('click', async function(){
+  document.getElementById('msg').innerText = '';
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  if(!u||!p){ document.getElementById('msg').innerText = 'Enter username and password'; return; }
+  
+  const typingMetricsData = calculateTypingMetrics();
+  
+  try {
+    const result = await login(u, p, typingMetricsData);
+    
+    // Handle OTP challenge
+    if (result && result.requiresOTP) {
+      challengeId = result.challengeId;
+      document.getElementById('otpSection').style.display = 'block';
+      document.getElementById('loginBtn').style.display = 'none';
+      document.getElementById('msg').innerText = result.message || 'OTP verification required';
+      return;
+    }
+  } catch(e){
+    document.getElementById('msg').innerText = e.message || 'Login failed';
+    // Reset typing metrics on failure
+    typingMetrics = {
+      usernameStartTime: null,
+      usernameEndTime: null,
+      passwordStartTime: null,
+      passwordEndTime: null,
+      usernameKeystrokes: 0,
+      passwordKeystrokes: 0
+    };
+  }
+});
+
+document.getElementById('verifyOtpBtn').addEventListener('click', async function(){
+  const otp = document.getElementById('otp').value;
+  if(!otp){ document.getElementById('msg').innerText = 'Enter OTP'; return; }
+  if(!challengeId){ document.getElementById('msg').innerText = 'No challenge ID'; return; }
+  
+  try {
+    await verifyOTP(challengeId, otp);
+  } catch(e){
+    document.getElementById('msg').innerText = e.message || 'OTP verification failed';
+  }
+});
+</script>
+</body>
+</html>

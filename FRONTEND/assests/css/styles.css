@@ -1,0 +1,5 @@
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;}
+.container{width:360px;margin:80px auto;padding:24px;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);text-align:center;}
+input{width:88%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:6px;}
+button{padding:10px 18px;background:#0b63ff;color:#fff;border:none;border-radius:6px;cursor:pointer;}
+#msg{color:#d9534f;margin-top:10px;}

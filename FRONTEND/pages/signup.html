@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Signup - Zero Trust</title>
+  <link rel="stylesheet" href="../assests/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Signup</h2>
+    <input id="username" placeholder="Username" />
+    <input id="password" type="password" placeholder="Password" />
+    <button id="signupBtn">Sign up</button>
+    <p id="msg"></p>
+    <p><a href="login.html">Already have an account? Login</a></p>
+  </div>
+
+<script src="../assests/js/auth.js"></script>
+<script src="../assests/js/fingerprint.js"></script>
+
+<script>
+document.getElementById('signupBtn').addEventListener('click', async function(){
+  document.getElementById('msg').innerText = '';
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  if(!u||!p){ document.getElementById('msg').innerText = 'Enter username and password'; return; }
+  try {
+    const res = await signup(u,p);
+    document.getElementById('msg').innerText = res;
+  } catch(e){
+    document.getElementById('msg').innerText = e.message || 'Signup failed';
+  }
+});
+</script>
+
+</body>
+</html>
